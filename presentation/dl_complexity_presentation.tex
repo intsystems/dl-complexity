@@ -1,0 +1,525 @@
+% Project presentation (10--15 min): DL Complexity.
+% Style follows the provided Beamer example: default theme, 16:9, blue headings,
+% restrained blocks, frame numbers, and no navigation symbols.
+% Build: tectonic dl_complexity_presentation.tex
+\documentclass[aspectratio=169,notheorems]{beamer}
+\usetheme{default}
+\usefonttheme{professionalfonts}
+\setbeamersize{text margin left=8mm,text margin right=8mm}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{%
+  \leavevmode
+  \hbox{\begin{beamercolorbox}[
+    wd=\paperwidth,ht=2.5ex,dp=1.2ex,center
+  ]{page number in head/foot}%
+    \insertframenumber
+  \end{beamercolorbox}}}
+\setbeamertemplate{itemize item}{--}
+\setbeamertemplate{itemize subitem}{--}
+
+\usepackage{fontspec}
+\setsansfont{Arial}
+\setmainfont{Arial}
+\XeTeXlinebreaklocale "en"
+\usepackage{amsmath,amssymb,mathtools,booktabs,array}
+\usepackage{microtype}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\definecolor{myblue}{RGB}{25,75,130}
+\setbeamercolor{structure}{fg=myblue}
+\setbeamercolor{frametitle}{fg=myblue}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setbeamertemplate{blocks}[rounded][shadow=false]
+\setbeamercolor{block title}{fg=myblue,bg=myblue!12}
+\setbeamercolor{block body}{bg=myblue!4}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\NLL}{\mathrm{NLL}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\take}[1]{%
+  \par\vspace{0.35em}{\color{myblue}\hrule height 0.6pt}%
+  \vspace{0.25em}\noindent\textbf{#1}\par}
+
+\title{DL Complexity}
+\subtitle{Theoretically informed deep learning model complexity estimation}
+\author{Alyabushev \and Dementiev \and Kurdyukov \and Chirkov}
+\date{Technical Meeting 1}
+
+\begin{document}
+
+% ============================================================ TITLE
+\begin{frame}[plain]
+\centering
+\vspace*{1.2em}
+{\LARGE\bfseries\color{myblue} DL Complexity}\\[0.5em]
+{\large Theoretically informed deep learning model complexity estimation}\\[2.0em]
+Alyabushev, Dementiev, Kurdyukov, Chirkov\\[0.4em]
+{\small Python package: \code{dl\_complexity}}\\[2.0em]
+Technical Meeting 1
+\end{frame}
+
+% ============================================================ PROBLEM
+\begin{frame}{Problem statement}
+\small
+Parameter count alone neither determines the complexity of the represented function nor
+explains generalization in overparameterized networks.
+
+\medskip
+\textbf{Research question:} which theoretically motivated estimators are most strongly
+associated with held-out NLL and the generalization gap across dataset sizes,
+architectures, and regularization settings?
+
+\medskip
+\begin{itemize}\setlength{\itemsep}{0.45em}
+  \item Implement several estimator families behind a common interface.
+  \item Compare them under one controlled experimental protocol.
+  \item Report the score, computational cost, rank stability, assumptions, and warnings.
+\end{itemize}
+
+\take{The project compares useful approximations; it does not assume one universal
+true measure of neural-network complexity.}
+\end{frame}
+
+% ============================================================ SCOPE
+\begin{frame}{Project deliverables and scope}
+\small
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{block}{Deliverables}
+\begin{itemize}\setlength{\itemsep}{0.3em}
+  \item an installable Python library;
+  \item a common benchmark runner;
+  \item reproducible configurations;
+  \item comparison tables and plots;
+  \item documentation and a demonstration workflow.
+\end{itemize}
+\end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{block}{First release}
+\begin{itemize}\setlength{\itemsep}{0.3em}
+  \item supervised classification;
+  \item small MLPs and CNNs;
+  \item synthetic data, MNIST, and Fashion-MNIST;
+  \item PyTorch models;
+  \item checkpoint-based evaluation where possible.
+\end{itemize}
+\end{block}
+\end{column}
+\end{columns}
+
+\medskip
+\textbf{Estimator-specific work:} posterior sampling, curvature estimation, compression,
+or repeated training is performed when the method requires it.
+
+\textbf{Out of scope:} large language models, distributed training, automatic model
+selection, and proofs of new generalization bounds.
+
+\textbf{Current status:} planning; the estimators have not yet been implemented.
+\end{frame}
+
+% ============================================================ INTERFACE
+\begin{frame}[shrink=4]{Project name and common interface}
+\small
+\textbf{Project name:} DL Complexity. \hfill
+\textbf{Python package:} \code{dl\_complexity}.
+
+\medskip
+\begin{block}{Primary interface}
+\code{ComplexityEstimator.estimate(context) -> ComplexityResult}
+\end{block}
+
+\renewcommand{\arraystretch}{1.16}
+\begin{tabular}{@{}L{0.27\textwidth}L{0.67\textwidth}@{}}
+\toprule
+\textbf{Type} & \textbf{Purpose} \\
+\midrule
+\code{EstimationContext} & model, dataset, split, likelihood, training artifacts, seed \\
+\code{ComplexityResult} & native value, valid nats/bits conversion, per-sample value,
+target, direction \\
+ & components, assumptions, warnings, runtime, peak memory, metadata \\
+\code{EstimatorConfig} & prior, precision, blocks, posterior samples, compression settings \\
+\bottomrule
+\end{tabular}
+
+\medskip
+With natural logarithms, AIC/BIC/HQIC/WAIC are in deviance units: divide by $2$ for an
+NLL-like value in nats and by $2\ln 2$ for bits. This conversion does not make them
+literal prefix-code lengths.
+
+\take{One output schema does not imply one semantics: predictive criteria, evidence
+approximations, operational codes, and risk bounds remain distinct.}
+\end{frame}
+
+% ============================================================ ARCHITECTURE
+\begin{frame}{Library architecture, integration, and technology stack}
+\small
+\centering
+\begin{tabular}{c@{$\to$}c@{$\to$}c@{$\to$}c}
+\fbox{\parbox{0.18\textwidth}{\centering
+model/data\\[-0.1em]
+adapters}}
+&
+\fbox{\parbox{0.18\textwidth}{\centering
+\code{Registry}\\[-0.1em]
+validation}}
+&
+\fbox{\parbox{0.20\textwidth}{\centering
+\code{Estimator}\\[-0.1em]
+four families}}
+&
+\fbox{\parbox{0.18\textwidth}{\centering
+\code{Result}\\[-0.1em]
+report}}
+\end{tabular}
+
+\medskip
+$\downarrow$\\[-0.2em]
+\fbox{\parbox{0.74\textwidth}{\centering
+\code{BenchmarkRunner}: train/load models $\rightarrow$ estimate $\rightarrow$
+aggregate $\rightarrow$ tables and plots}}
+
+\medskip
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\textbf{Integration}
+\begin{itemize}\setlength{\itemsep}{0.25em}
+  \item \code{torch.nn.Module}, \code{DataLoader};
+  \item likelihood and posterior-sample adapters;
+  \item optional curvature and compression backends;
+  \item JSON/CSV-compatible result records.
+\end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+\textbf{Technology stack}
+\begin{itemize}\setlength{\itemsep}{0.25em}
+  \item Python 3.11+, PyTorch;
+  \item NumPy, SciPy, pandas, scikit-learn;
+  \item pytest, coverage, ruff, static typing;
+  \item MkDocs; Jupyter or Streamlit for the demo.
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ============================================================ ALGORITHM 1
+\begin{frame}[shrink=9]{Algorithms I: information criteria and two-part MDL}
+\footnotesize
+Let $\widehat L$ be the maximized \emph{total} likelihood, $k$ the number of estimated
+free parameters, and $n$ the number of independent observations. Natural logs are used.
+\[
+\mathrm{AIC}=-2\log\widehat L+2k,\quad
+\mathrm{BIC}=-2\log\widehat L+k\log n,\quad
+\mathrm{HQIC}=-2\log\widehat L+2k\log\log n.
+\]
+\textbf{WAIC} is a posterior predictive criterion:
+\[
+\mathrm{WAIC}=-2(\mathrm{lppd}-p_{\mathrm{WAIC}}),\quad
+\mathrm{lppd}=\sum_i\log\E_{\theta\mid D}p(y_i\mid\theta),\quad
+p_{\mathrm{WAIC}}=\sum_i\operatorname{Var}_{\theta\mid D}\log p(y_i\mid\theta).
+\]
+\textbf{WBIC} approximates Bayesian free energy using a tempered posterior:
+\[
+p_\beta(\theta\mid D)\propto p(D\mid\theta)^\beta p(\theta),\quad
+\beta=1/\log n,\quad
+\mathrm{WBIC}=\E_\beta[-\log p(D\mid\theta)].
+\]
+\textbf{Two-part MDL} is an operational code:
+\[
+L_{\mathrm{2p}}=L(\theta_\delta)+L(D\mid\theta_\delta),
+\]
+where a prefix code, quantization rule $\delta$, model structure, and hyperparameters
+must be specified.
+
+\take{AIC/BIC/HQIC are baselines for deep networks; their regular-model assumptions
+usually fail because neural networks are singular and non-identifiable.}
+\end{frame}
+
+% ============================================================ ALGORITHM 2
+\begin{frame}[shrink=5]{Algorithms II: Bayesian coding and marginal evidence}
+\small
+\begin{block}{Variational approximation}
+For prior $p(\theta)$ and variational approximation $q_\phi(\theta)$,
+\[
+\mathcal L_{\mathrm{var}}
+=\E_{q_\phi}[-\log p(D\mid\theta)]
++\KL\!\left(q_\phi(\theta)\,\|\,p(\theta)\right)
+=-\mathrm{ELBO}\geq-\log p(D).
+\]
+The coding interpretation of the KL term requires an explicit scheme such as bits-back coding.
+\end{block}
+
+\begin{block}{KFAC--Laplace approximation}
+At the MAP estimate $\widehat\theta$, let
+$H=\nabla_\theta^2[-\log p(D,\theta)]_{\widehat\theta}$ be positive definite. Then
+\[
+-\log p(D)\approx-\log p(D,\widehat\theta)
++\tfrac12\log\det H-\tfrac d2\log(2\pi).
+\]
+KFAC replaces full curvature by layerwise Kronecker-factored Fisher/GGN blocks.
+\end{block}
+
+\textbf{The estimate depends on} the prior, variational family, curvature definition,
+damping, and the validity of a single-mode Gaussian approximation.
+\end{frame}
+
+% ============================================================ ALGORITHM 3
+\begin{frame}[shrink=4]{Algorithms III: prequential coding}
+\small
+Ordered data are partitioned into blocks $0=n_0<n_1<\dots<n_m=n$. The first labels
+use a uniform code; each later block is encoded by a model trained only on previously
+decoded labels:
+\[
+L_{\mathrm{preq}}
+=n_1\log_2 K
+-\sum_{j=2}^{m}\sum_{i=n_{j-1}+1}^{n_j}
+\log_2 p_{\widehat\theta(D_{<j})}(y_i\mid x_i).
+\]
+
+\begin{center}
+\fbox{uniform labels}
+$\longrightarrow$
+\fbox{train on $D_1$, encode $D_2$}
+$\longrightarrow$
+\fbox{train on $D_{1:2}$, encode $D_3$}
+$\longrightarrow\cdots$
+\end{center}
+
+\begin{itemize}\setlength{\itemsep}{0.34em}
+  \item Inputs $x_i$ are shared side information; only labels are encoded.
+  \item Architecture, optimizer, ordering, block schedule, calibration protocol, and
+        reproducible training procedure must be shared or encoded.
+  \item Implement a blockwise baseline and an online/replay variant; report every
+        training run and wall-clock cost.
+\end{itemize}
+
+\textbf{Validation:} encoder and decoder reproduce the same probabilities without
+future-label leakage. Shorter per-example length on readily learnable data is a
+diagnostic, not a theorem.
+\end{frame}
+
+% ============================================================ ALGORITHM 4
+\begin{frame}[shrink=3]{Algorithms IV: compression-based complexity}
+\small
+A trained network is replaced by a discrete compressed representation $C$ using
+pruning, quantization, or low-rank factorization. Two related quantities are kept separate:
+\[
+\underbrace{L(C)+L(D\mid C)}_{\text{two-part data code}}
+\qquad\text{and}\qquad
+\underbrace{\ell(C)}_{\text{model description in bits}}.
+\]
+For a prefix-coded hypothesis and bounded loss, a schematic Occam bound is
+\[
+R(C)\ \leq\ \widehat R(C)+
+\sqrt{\frac{\ell(C)\ln 2+\ln(1/\delta)}{2n}},
+\]
+with the exact constants determined by the selected theorem.
+
+\begin{itemize}\setlength{\itemsep}{0.32em}
+  \item The bound applies to the compressed model; relating it to the original model
+        requires a controlled loss or margin distortion.
+  \item The encoder, decoder, precision, sparsity indices, and side information are
+        fixed by the protocol and counted in the code.
+  \item A serialized \code{.pt} file size is not a theoretical description length.
+\end{itemize}
+
+\textbf{Validation:} exact round-trip decoding, reproducible bit count, and measured
+accuracy, NLL, and margin change after compression.
+\end{frame}
+
+% ============================================================ BENCHMARK
+\begin{frame}[shrink=4]{Benchmark protocol and hypotheses}
+\small
+\renewcommand{\arraystretch}{1.13}
+\begin{tabular}{@{}L{0.27\textwidth}L{0.67\textwidth}@{}}
+\toprule
+\textbf{Component} & \textbf{Controlled or varied} \\
+\midrule
+Data & synthetic classification, MNIST, Fashion-MNIST; fixed train/validation/test splits \\
+Models & MLP/CNN; width, depth, regularization, multiple random seeds \\
+Training & optimizer, stopping rule, compute budget; MLE-like baseline where required \\
+Outputs & native score, justified nats/bits conversion, components, assumptions, warnings \\
+Resources & wall-clock time, number of training runs, peak memory \\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textbf{Two empirical hypotheses}
+\begin{enumerate}\setlength{\itemsep}{0.2em}
+  \item total criterion or code length, normalized per example, versus held-out NLL;
+  \item consistently normalized penalty or model-description component versus the generalization gap
+        (test NLL minus train NLL, in evaluation mode).
+\end{enumerate}
+
+\textbf{Analysis:} Spearman correlation, confidence intervals, rank stability across
+seeds and sample sizes, and estimator cost relative to model training. Validation data
+select hyperparameters; the test set is used only for final evaluation.
+
+\take{Compare lower-is-better ranks within each estimator target; unit conversion alone
+does not create semantic comparability.}
+\end{frame}
+
+% ============================================================ POC
+\begin{frame}{Proof-of-concept demonstration}
+\small
+\textbf{PoC for Technical Meeting 2}
+\begin{enumerate}\setlength{\itemsep}{0.32em}
+  \item Train 3--5 MLPs of different widths on one fixed MNIST split.
+  \item Through the common API, compute parameter count, BIC, two-part MDL, and a
+        blockwise prequential code.
+  \item Save the configuration, seed, checkpoints, score components, time, and memory.
+  \item Plot complexity against held-out NLL and the generalization gap.
+\end{enumerate}
+
+\medskip
+\begin{block}{Basic user workflow}
+\code{result = registry.create("bic", config).estimate(context)}\\
+\code{report = BenchmarkRunner(experiment).run(estimators)}
+\end{block}
+
+\textbf{Final demo output:} a comparable result table with native units, rank order,
+score decomposition, assumptions, warnings, and runtime. One CLI or notebook workflow
+must reproduce the result from a clean environment.
+
+\take{The PoC validates the interface and the end-to-end data path; it is not yet the
+final empirical study.}
+\end{frame}
+
+% ============================================================ ROLES
+\begin{frame}[shrink=5]{Team responsibilities and algorithm ownership}
+\scriptsize
+\renewcommand{\arraystretch}{1.20}
+\begin{tabular}{@{}L{0.13\textwidth}L{0.28\textwidth}L{0.50\textwidth}@{}}
+\toprule
+\textbf{Member} & \textbf{Algorithm family} & \textbf{Additional responsibilities and deliverable} \\
+\midrule
+Alyabushev & AIC, BIC, HQIC, WAIC, WBIC, two-part MDL &
+Planning; benchmarks and PoC; final comparison tables. \\
+Dementiev & Variational coding; KFAC--Laplace evidence &
+Planning; library packaging and common API; tests and coverage above 90\%. \\
+Kurdyukov & Blockwise and online/replay prequential coding &
+Planning; public API documentation; reproducible final demonstration. \\
+Chirkov & Compression-based score and generalization bound &
+Planning; blog post; three-to-five-page technical report. \\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textbf{Cross-review:}
+Alyabushev $\rightarrow$ Dementiev $\rightarrow$ Kurdyukov $\rightarrow$ Chirkov
+$\rightarrow$ Alyabushev.
+
+\medskip
+Each algorithm owner supplies the mathematical definition and assumptions, interface
+implementation, minimal example, unit tests, and documentation section.
+\end{frame}
+
+% ============================================================ MILESTONES
+\begin{frame}[shrink=4]{Milestones and acceptance criteria}
+\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}L{0.21\textwidth}L{0.70\textwidth}@{}}
+\toprule
+\textbf{Stage} & \textbf{Verifiable deliverable} \\
+\midrule
+Technical Meeting 1 & scope, definitions, units, architecture, stack, API, roles, PoC plan \\
+Technical Meeting 2 & end-to-end PoC; draft documentation, blog post, and technical report \\
+Checkpoint & installable package; consistent code style; workflows; cross-review \\
+Technical Meeting 3 & all estimator families; benchmark; coverage above 90\%; demo; final report \\
+\bottomrule
+\end{tabular}
+
+\medskip
+\begin{block}{Definition of done}
+\begin{itemize}\setlength{\itemsep}{0.23em}
+  \item installation and execution succeed in a clean environment;
+  \item every estimator implements one contract and returns a structured result;
+  \item benchmark configurations fix data, training, units, and evaluation protocol;
+  \item tests cover formulas, edge cases, and end-to-end integration;
+  \item documentation states assumptions and provides reproducible examples;
+  \item the report separates established theory, implementation choices, and empirical findings.
+\end{itemize}
+\end{block}
+\end{frame}
+
+% ============================================================ RISKS
+\begin{frame}[shrink=4]{Main risks and controls}
+\small
+\renewcommand{\arraystretch}{1.16}
+\begin{tabular}{@{}L{0.43\textwidth}L{0.50\textwidth}@{}}
+\toprule
+\textbf{Risk} & \textbf{Control} \\
+\midrule
+Regular-model criteria are applied to singular neural networks &
+treat them as baselines; state violated assumptions and use a controlled MLE-like run \\
+WAIC/WBIC require posterior inference &
+use a dedicated adapter; do not report a score when required draws are absent \\
+Laplace is sensitive to prior, curvature, and damping &
+save the decomposition and run a sensitivity analysis \\
+Prequential coding requires many repeated fits &
+start with small models; fixed block schedule; online/replay variant \\
+Compression results depend on the exact code and distortion &
+fix encoder/decoder; count side information; verify round-trip and quality change \\
+Scores use different targets and native scales &
+retain target and native value; convert only when justified; compare stratified ranks \\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textbf{Resource constraint:} first validate one minimal estimator per family on an MLP;
+add CNNs and the full experiment grid only after the shared interface is stable.
+\end{frame}
+
+% ============================================================ SUMMARY
+\begin{frame}{Summary}
+\begin{itemize}\setlength{\itemsep}{0.7em}
+  \item \code{dl\_complexity} exposes classical, MDL, Bayesian, prequential, and
+        compression-based estimators through one transparent interface.
+  \item The benchmark relates their native outputs to held-out NLL, the generalization
+        gap, computational cost, and rank stability on controlled models and data.
+  \item The first result is an end-to-end MLP PoC; four algorithm branches then proceed
+        in parallel and undergo cross-review.
+  \item Every result retains its target, assumptions, units, components, and warnings;
+        common software does not erase theoretical differences.
+\end{itemize}
+
+\take{Next technical step: finalize \code{EstimationContext} and
+\code{ComplexityResult}, then implement the BIC, two-part MDL, and prequential PoC.}
+\end{frame}
+
+% ============================================================ LITERATURE
+\begin{frame}[t,shrink=5]{References}
+\scriptsize
+\begin{thebibliography}{9}\setlength{\itemsep}{0.28em}
+\bibitem[Classical criteria]{classical}
+H.~Akaike (1974), G.~Schwarz (1978), and E.~Hannan \& B.~Quinn (1979).
+Primary definitions of AIC, BIC, and HQIC.
+
+\bibitem[Watanabe(2010, 2013)]{watanabe}
+S.~Watanabe. \emph{Asymptotic Equivalence of Bayes Cross Validation and Widely
+Applicable Information Criterion in Singular Learning Theory} (JMLR, 2010);
+\emph{A Widely Applicable Bayesian Information Criterion} (JMLR, 2013).
+
+\bibitem[Grunwald(2004)]{grunwald}
+P.~Grunwald. \emph{A Tutorial Introduction to the Minimum Description Length Principle}.
+arXiv:math/0406077, 2004.
+
+\bibitem[Graves(2011)]{graves}
+A.~Graves. \emph{Practical Variational Inference for Neural Networks}. NeurIPS, 2011.
+
+\bibitem[Ritter et al.(2018)]{ritter}
+H.~Ritter, A.~Botev, D.~Barber. \emph{A Scalable Laplace Approximation for Neural Networks}.
+ICLR, 2018.
+
+\bibitem[Bornschein et al.(2022)]{bornschein}
+J.~Bornschein, Y.~Li, M.~Hutter. \emph{Sequential Learning of Neural Networks for
+Prequential MDL}. arXiv:2210.07931, 2022.
+
+\bibitem[Arora et al.(2018)]{arora}
+S.~Arora, R.~Ge, B.~Neyshabur, Y.~Zhang. \emph{Stronger Generalization Bounds for Deep
+Nets via a Compression Approach}. ICML, 2018.
+\end{thebibliography}
+\end{frame}
+
+\end{document}
