@@ -1,0 +1,20 @@
+include examples/quickstart.py
+include literature/README.md
+recursive-include docs *.md
+recursive-include tests *.py *.md
+recursive-include src *.md
+
+# Local development material is not part of the source distribution.
+prune local-notes
+prune sdd
+prune drafts
+prune validation
+prune vibe
+prune **/.agents
+prune **/.codex
+prune **/.claude
+prune **/.cursor
+prune **/.specify
+exclude verification.json
+global-exclude AGENTS.md AGENTS.override.md CLAUDE.md GEMINI.md
+global-exclude VERSION_NOTES.md GITHUB_CONTENTS.md

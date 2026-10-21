@@ -111,7 +111,7 @@ __pycache__/
 .gitignore
 # Exclude folders with name logs:
 logs/
- 
+
 # Exclude all .dat files:
 *.dat
 # Exclude all files which begin on .
@@ -120,3 +120,26 @@ logs/
 */mnist
 *.csv
 !.dvc
+
+# Local agent instructions and settings (including nested copies)
+AGENTS.md
+AGENTS.override.md
+CLAUDE.md
+GEMINI.md
+.agents/
+.codex/
+.claude/
+.cursor/
+
+# Local specifications and development plans
+/sdd/
+/.specify/
+/vibe/
+
+# Private version notes, drafts and verification reports
+/local-notes/
+/drafts/
+/validation/
+/verification.json
+VERSION_NOTES.md
+GITHUB_CONTENTS.md
