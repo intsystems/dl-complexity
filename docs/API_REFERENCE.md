@@ -3632,7 +3632,7 @@ Notes:
 
 Импорт: `from dl_complexity.integrations.torch import ...`.
 
-[CategoricalLikelihood](#api-dl_complexity-integrations-torch-likelihood-categoricallikelihood) | [GaussianLikelihood](#api-dl_complexity-integrations-torch-likelihood-gaussianlikelihood) | [prepare_fit_statistics](#api-dl_complexity-integrations-torch-likelihood-prepare_fit_statistics) | [TrainingRun](#api-dl_complexity-integrations-torch-training-trainingrun) | [run_training](#api-dl_complexity-integrations-torch-training-run_training)
+[CategoricalLikelihood](#api-dl_complexity-integrations-torch-likelihood-categoricallikelihood) | [GaussianLikelihood](#api-dl_complexity-integrations-torch-likelihood-gaussianlikelihood) | [prepare_fit_statistics](#api-dl_complexity-integrations-torch-likelihood-prepare_fit_statistics) | [Langevin](#api-dl_complexity-integrations-torch-sampling-langevin) | [PosteriorDraws](#api-dl_complexity-integrations-torch-sampling-posteriordraws) | [sample_posterior](#api-dl_complexity-integrations-torch-sampling-sample_posterior) | [prepare_posterior_log_likelihood](#api-dl_complexity-integrations-torch-sampling-prepare_posterior_log_likelihood) | [prepare_tempered_likelihood](#api-dl_complexity-integrations-torch-sampling-prepare_tempered_likelihood) | [TrainingRun](#api-dl_complexity-integrations-torch-training-trainingrun) | [run_training](#api-dl_complexity-integrations-torch-training-run_training)
 
 <a id="api-dl_complexity-integrations-torch-likelihood-categoricallikelihood"></a>
 
@@ -3792,6 +3792,170 @@ Notes:
     Time includes copying model state plus all forwards/likelihood reductions.
     Grad mode is preserved: enabled autograd can retain every batch's graph,
     not only the last batch. Use torch.no_grad() explicitly when appropriate.
+```
+
+</details>
+
+---
+
+<a id="api-dl_complexity-integrations-torch-sampling-langevin"></a>
+
+### `Langevin`
+
+[Исходник](../src/dl_complexity/integrations/torch/sampling.py#L51)
+
+```text
+Langevin(
+    step_size: 'float',
+    num_draws: 'int',
+    burn_in: 'int' = 0,
+    thin: 'int' = 1,
+    metropolis: 'bool' = False,
+    minibatch: 'bool' = False,
+    seed: 'int | None' = None
+)
+```
+
+Settings of a Langevin chain.
+
+<details>
+<summary>Параметры, результат и ограничения</summary>
+
+```text
+Args:
+    step_size (float): step h.
+    num_draws (int): number of saved draws.
+    burn_in (int): steps skipped before the first draw.
+    thin (int): steps between saved draws.
+    metropolis (bool): MALA instead of plain Langevin (full batch only).
+    minibatch (bool): SGLD, one batch per step.
+    seed (int, optional): random seed; a random one is used if None.
+
+With minibatch=True batches go in a cycle, so pick thin coprime with
+the number of batches.
+```
+
+</details>
+
+---
+
+<a id="api-dl_complexity-integrations-torch-sampling-posteriordraws"></a>
+
+### `PosteriorDraws`
+
+[Исходник](../src/dl_complexity/integrations/torch/sampling.py#L104)
+
+```text
+PosteriorDraws(
+    parameters: 'torch.Tensor',
+    names: 'tuple',
+    log_likelihood: 'torch.Tensor',
+    n: 'int',
+    beta: 'float',
+    prior_precision: 'float',
+    localization: 'float',
+    acceptance_rate: 'float | None',
+    provenance: 'Provenance | None' = None,
+    seed: 'int | None' = None
+)
+```
+
+Result of sample_posterior.
+
+<details>
+<summary>Параметры, результат и ограничения</summary>
+
+```text
+Args:
+    parameters (Tensor): draws [S, P], weights flattened in ``names`` order.
+    names (tuple): names of the sampled parameters.
+    log_likelihood (Tensor): log p(y_i | x_i, w_s) for all draws, [S, n].
+    n (int): number of observations.
+    beta, prior_precision, localization (float): the target settings.
+    acceptance_rate (float or None): MALA acceptance (with burn-in).
+    provenance (Provenance, optional): ids of model, data and likelihood.
+    seed (int, optional): seed that was actually used.
+```
+
+</details>
+
+---
+
+<a id="api-dl_complexity-integrations-torch-sampling-sample_posterior"></a>
+
+### `sample_posterior`
+
+[Исходник](../src/dl_complexity/integrations/torch/sampling.py#L249)
+
+```text
+sample_posterior(context, *, data, sampler, prior_precision, beta=1.0, localization=0.0)
+```
+
+Run a Langevin chain starting from the current weights of the model.
+
+<details>
+<summary>Параметры, результат и ограничения</summary>
+
+```text
+Args:
+    context (ModelContext): model with a pointwise likelihood.
+    data (DataSource): reusable batches (inputs, targets).
+    sampler (Langevin): chain settings.
+    prior_precision (float): alpha in the prior N(0, I / alpha).
+    beta (float): inverse temperature, 1 for WAIC, 1/log n for WBIC.
+    localization (float): gamma, pull towards the start; 0 = off.
+
+Returns:
+    PosteriorDraws
+
+The model itself, its mode and the global torch RNG are not changed.
+One full-batch step costs one forward/backward pass over the data.
+```
+
+</details>
+
+---
+
+<a id="api-dl_complexity-integrations-torch-sampling-prepare_posterior_log_likelihood"></a>
+
+### `prepare_posterior_log_likelihood`
+
+[Исходник](../src/dl_complexity/integrations/torch/sampling.py#L384)
+
+```text
+prepare_posterior_log_likelihood(context, *, data, sampler, prior_precision)
+```
+
+Draws from the usual posterior (beta = 1) as input for WAIC.
+
+<details>
+<summary>Параметры, результат и ограничения</summary>
+
+```text
+Needs at least two draws. Whether the chain has mixed is not checked.
+```
+
+</details>
+
+---
+
+<a id="api-dl_complexity-integrations-torch-sampling-prepare_tempered_likelihood"></a>
+
+### `prepare_tempered_likelihood`
+
+[Исходник](../src/dl_complexity/integrations/torch/sampling.py#L401)
+
+```text
+prepare_tempered_likelihood(context, *, data, sampler, prior_precision)
+```
+
+Draws at beta = 1/log n as input for WBIC.
+
+<details>
+<summary>Параметры, результат и ограничения</summary>
+
+```text
+If the DataSource does not declare n, it is counted first.
 ```
 
 </details>

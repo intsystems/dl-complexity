@@ -1,6 +1,6 @@
 # PyTorch-интеграция
 
-_Карта `dl_complexity.integrations.torch`: pointwise likelihood, изолированная оценка модели и явный запуск обучения._
+_Карта `dl_complexity.integrations.torch`: pointwise likelihood, изолированная оценка модели, выборки весов для WAIC/WBIC и явный запуск обучения._
 
 ---
 
@@ -12,6 +12,7 @@ _Карта `dl_complexity.integrations.torch`: pointwise likelihood, изоли
 | --- | --- | --- |
 | [likelihood.py](likelihood.py) | `CategoricalLikelihood`, `GaussianLikelihood`, `prepare_fit_statistics` | Валидация batch, observation axis и суммирование likelihood |
 | [training.py](training.py) | `TrainingRun`, `run_training` | Вложенная функция `record(status)` сохраняет метаданные запуска |
+| [sampling.py](sampling.py) | `Langevin`, `PosteriorDraws`, `sample_posterior`, `prepare_posterior_log_likelihood`, `prepare_tempered_likelihood` | `_Target`: eval-копия модели, плоский вектор весов, U(w) и его градиент |
 | [model.py](model.py) | Не экспортируется через пакетный `__all__` | `model_rng_scope`, `isolated_forward` и вложенный `forward` |
 | [__init__.py](__init__.py) | Пакетные импорты перечисленных публичных имён | Дополнительной логики нет |
 
@@ -70,6 +71,12 @@ flowchart TB
 `isolated_forward` сначала делает `deepcopy(model)` и переводит копию в `eval()`. Отдельные клоны исходных параметров и buffers передаются в `torch.func.functional_call`. Параметрические клоны сохраняют autograd-связь с исходными leaves. Tuple inputs превращаются в позиционные аргументы модели. Режимы модулей, параметры и buffers исходной модели при обычном PyTorch-forward сохраняются.
 
 `model_rng_scope` сохраняет и восстанавливает CPU Torch RNG, RNG CUDA-устройств, на которых лежат параметры/buffers, и MPS RNG при наличии MPS-тензоров. Восстановление выполняется и при исключении. Python/NumPy RNG, произвольные внешние устройства и глобальные побочные эффекты пользовательского forward не изолируются. Невозможность `deepcopy` требует готовых численных входов вместо этого пути.
+
+## 🎲 Выборки весов для WAIC и WBIC
+
+`sample_posterior` строит цепь Ланжевена по обучаемым весам модели, начиная с текущих. Целевое распределение $p(w)\propto\exp(-\beta\,nL_n(w)-\frac{\alpha}{2}\lVert w\rVert^2-\frac{\gamma}{2}\lVert w-w_0\rVert^2)$. Режимы: ULA, MALA (`metropolis=True`) и SGLD (`minibatch=True`). Модель вычисляется как eval-копия, исходные веса, режимы и глобальный RNG не меняются.
+
+`prepare_posterior_log_likelihood` (β = 1) и `prepare_tempered_likelihood` (β = 1/ln n) возвращают готовые входы для `WAIC` и `WBIC`. Подробнее — в [CODE_WALKTHROUGH](../../../../docs/CODE_WALKTHROUGH.md#posterior-sampling), тесты — [test_sampling.py](../../../../tests/test_sampling.py) и [test_sampling_networks.py](../../../../tests/test_sampling_networks.py).
 
 ## 🏋️ Явное обучение на копии
 

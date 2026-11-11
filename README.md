@@ -139,7 +139,9 @@ negative ELBO для заданных q/prior; KFAC с явными фактор
 Gaussian Linear; blockwise CI/FS, online и uniform-prefix replay; weight-only сжатие с
 бинарным codec. Для Arora реализованы Matrix-Project (Algorithm 1) и условная Theorem 2.1
 с полным sample certificate. Полная noise-stability Theorem 4.1 в этот API не входит.
-WBIC требует готовых температурных выборок, а KFAC для произвольной сети — готовых факторов.
+WAIC и WBIC принимают выборки весов; для модели PyTorch их готовят
+`prepare_posterior_log_likelihood` и `prepare_tempered_likelihood` (MALA/ULA/SGLD).
+KFAC для произвольной сети требует готовых факторов.
 
 Основная презентация — **архитектура библиотеки и BIC proof of concept**, 6 слайдов на английском:
 [PDF](presentation/proof-of-concept/main.pdf),

@@ -316,6 +316,57 @@ result = WAIC().estimate(inputs=PosteriorLogLikelihood(log_likelihood))
 print(result.primary.value.item())  # 4.884223039883308
 ```
 
+<a id="posterior-sampling"></a>
+
+### Выборки из апостериорного распределения
+
+Матрицу для WAIC и вектор для WBIC готовит сэмплер `dl_complexity.integrations.torch.sampling`. Он строит цепь Ланжевена по обучаемым параметрам модели `w` (в порядке `named_parameters`) для распределения
+
+$$
+p(w)\propto\exp\Bigl(-\beta\,nL_n(w)-\tfrac{\alpha}{2}\lVert w\rVert^2-\tfrac{\gamma}{2}\lVert w-w_0\rVert^2\Bigr),
+$$
+
+где `nL_n` — полное отрицательное логарифмическое правдоподобие по всем наблюдениям `DataSource`, `α` — точность гауссовского prior, `w₀` — текущие веса модели (начало цепи). `β = 1`, `γ = 0` — обычное апостериорное распределение для WAIC; `β = 1/ln n`, `γ = 0` — распределение WBIC; `γ > 0` даёт локализованное распределение для локального коэффициента обучения.
+
+Шаг `w' = w − h∇U(w) + √(2h)ξ`. `Langevin(step_size, num_draws, burn_in=0, thin=1, metropolis=False, minibatch=False, seed=None)` задаёт цепь:
+
+| Режим | Настройка | Что происходит |
+|---|---|---|
+| ULA | по умолчанию | Полный градиент по всем батчам, без поправки; смещение `O(h)` |
+| MALA | `metropolis=True` | Поправка Метрополиса–Гастингса, только полный батч; `acceptance_rate` в результате |
+| SGLD | `minibatch=True` | Один батч на шаг, градиент правдоподобия умножается на число батчей за проход (при равных батчах это `n/B`), поэтому за проход каждое наблюдение учитывается ровно один раз, даже если последний батч меньше; батчи берутся по кругу, `thin` должен быть взаимно прост с числом батчей |
+
+Каждый сохранённый сэмпл сопровождается поточечным правдоподобием всех `n` наблюдений. Модель вычисляется как изолированная копия в eval-режиме: веса, буферы, режимы и градиенты исходной модели, а также глобальный генератор Torch не меняются. Расходящаяся цепь останавливается с `InputError`. Если `seed` не задан, берётся случайный; `sample_posterior` возвращает его в `PosteriorDraws.seed`, а `prepare_*` его не сохраняют, поэтому для воспроизводимости передавайте `seed` явно. `acceptance_rate` считается по всем шагам, включая burn-in.
+
+```python
+import math
+from dl_complexity.bayesian import WBIC
+from dl_complexity.criteria import WAIC
+from dl_complexity.integrations.torch import (
+    Langevin,
+    prepare_posterior_log_likelihood,
+    prepare_tempered_likelihood,
+)
+
+# context — ModelContext обученной сети с CategoricalLikelihood, data — DataSource.
+# Шаги 1e-3 и 3e-3 условные: подбирайте их по acceptance_rate.
+posterior = prepare_posterior_log_likelihood(
+    context, data=data, prior_precision=1.0,
+    sampler=Langevin(1e-3, 1000, burn_in=1000, thin=2, metropolis=True, seed=0),
+)
+waic = WAIC().estimate(inputs=posterior)
+
+tempered = prepare_tempered_likelihood(  # beta = 1/ln n считается сам
+    context, data=data, prior_precision=1.0,
+    sampler=Langevin(3e-3, 1000, burn_in=1000, thin=2, metropolis=True, seed=1),
+)
+wbic = WBIC().estimate(inputs=tempered).primary.value
+# lambda_hat = (wbic - nL_n(w0)) / ln n, где w0 — истинный параметр. Подстановка
+# обученных весов вместо w0 смещает оценку: они подогнаны под шум выборки.
+```
+
+Сходимость цепи не проверяется: смотрите на `acceptance_rate` (для MALA разумно 0,5–0,9), повторяйте с другим `seed` и сравнивайте половины цепи. Цепь, начатая с обученных весов, исследует апостериорное распределение около этой моды. Полный пример на MLP разной ширины — [examples/waic_wbic_mlp.py](../examples/waic_wbic_mlp.py).
+
 <a id="sb-bayesian"></a>
 
 ## Байесовские оценки
@@ -347,7 +398,7 @@ $$
 \operatorname{WBIC}=-\frac1S\sum_{s=1}^{S}\ell_s.
 $$
 
-Дополнительных множителей `β` или `2` нет. Время — `O(S)`, память входов и проверок может составлять `O(S)`. Основной результат `wbic` возвращается в nats. Получение температурных выборок и проверка смешивания цепи остаются за пользователем.
+Дополнительных множителей `β` или `2` нет. Время — `O(S)`, память входов и проверок может составлять `O(S)`. Основной результат `wbic` возвращается в nats. Температурные выборки готовит `prepare_tempered_likelihood` (см. [выборки из апостериорного распределения](#posterior-sampling)); проверка смешивания цепи остаётся за пользователем.
 
 ### Вариационная свободная энергия
 
