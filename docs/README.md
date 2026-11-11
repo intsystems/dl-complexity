@@ -63,8 +63,8 @@ bits или в вероятность ошибки. Компоненты оце�
 | Что нужно оценить | Методы | Что передать |
 | --- | --- | --- |
 | Штраф за размерность статистической модели | AIC, BIC, HQIC | Модель с likelihood и данными либо `FitStatistics` |
-| Posterior predictive качество с поправкой на сложность | WAIC | Матрицу log-likelihood `[draws, observations]` обычного posterior |
-| Приближение отрицательного log evidence | WBIC | Total log-likelihood по tempered posterior при `beta=1/ln(n)` |
+| Posterior predictive качество с поправкой на сложность | WAIC | Матрицу log-likelihood `[draws, observations]` обычного posterior (готовит `prepare_posterior_log_likelihood`) |
+| Приближение отрицательного log evidence | WBIC | Total log-likelihood по tempered posterior при `beta=1/ln(n)` (готовит `prepare_tempered_likelihood`) |
 | Вариационную свободную энергию | `VariationalCode` | Ожидаемый total NLL и KL либо явную подготовку из `q` и prior |
 | Laplace-приближение отрицательного log evidence | `KFACLaplace` | Likelihood, нормированный prior и logdet либо KFAC-факторы |
 | Двухчастную длину описания | `TwoPartMDL` | Длину модели и NLL декодированного предиктора |
@@ -98,7 +98,8 @@ posterior draws, префиксную историю обучения или с�
 ## Требования к входам и варианты методов
 
 - WAIC использует вариант WAIC2 с выборочной дисперсией `ddof=1`.
-  WBIC принимает готовые tempered draws, собственного сэмплера нет.
+  WBIC принимает tempered draws. Выборки для обоих готовит сэмплер
+  `dl_complexity.integrations.torch.sampling`; сходимость цепи он не проверяет.
 - Подготовка точных KFAC-факторов поддерживает один встроенный `nn.Linear`
   с гауссовским likelihood. Для произвольной сети факторы нужно предоставить.
 - Arora включает Matrix-Project и условную Theorem 2.1. Полная noise-stability
