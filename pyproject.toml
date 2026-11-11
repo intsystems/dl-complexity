@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dl-complexity"
+version = "0.1.0a1"
+description = "PyTorch model complexity criteria, Bayesian objectives, codes and bounds"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["torch>=2.2"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]

@@ -3,8 +3,10 @@
 **Theoretically informed deep learning model complexity estimation** — библиотека и
 экспериментальный стенд для сопоставимой оценки сложности моделей глубокого обучения.
 
-> Статус: этап планирования. Код учебного шаблона удалён; перечисленные ниже методы и
-> чистый пакет `dl_complexity` ещё предстоит реализовать.
+[Документация пользователя](docs/README.md) содержит быстрый старт и выбор методов.
+В [руководстве](docs/CODE_WALKTHROUGH.md) разобраны вызовы, формулы и ограничения,
+в [справочнике API](docs/API_REFERENCE.md) — публичные сигнатуры и параметры.
+[Карта исходников](src/dl_complexity/README.md) описывает модули и базовые интерфейсы.
 
 ## Идея и задача
 
@@ -85,14 +87,63 @@ KFAC/Laplace-бэкенд, но публичный API проекта не до�
 
 Индекс первоисточников и локальные PDF находятся в [`literature/`](literature/README.md).
 
+## Проверка на аналитических эталонах
+
+В [`tests/`](tests/README.md) находятся обычные pytest-тесты, включая проверки на
+простых моделях с независимо известным ответом. Они входят в репозиторий и исходный
+пакет (`sdist`), не требуют внешних отчётов, скачивания данных или обучения большой сети.
+
+- `test_analytical_criteria.py` — MLE нормальной и Bernoulli-моделей, OLS,
+  AIC/BIC/HQIC и WAIC с точным дискретным posterior;
+- `test_analytical_bayesian.py` — Gaussian evidence, KFAC-Laplace, VI и WBIC;
+- `test_analytical_codes_bounds.py` — последовательные коды, реальный codec,
+  pruning/low-rank/quantization и реализованная часть Arora;
+- `test_analytical_integration.py` — checkpoint, нормы и аналитические производные.
+
+Из корня проекта в окружении с зависимостями из `pyproject.toml`:
+
+```bash
+python -m pytest -q
+python -m pytest -q -k analytical
+```
+
+Краткие теоретические расчёты, численные значения, допуски и карта остальных файлов —
+в [`tests/README.md`](tests/README.md). Проверки разделены по методам и охватывают
+численные значения, формы тензоров и публичные вызовы. Метрики обучения на случайной
+выборке не заменяют аналитический эталон.
+
+Тесты различают точные формулы, WAIC по конечному набору значений и оценки
+Монте-Карло с отдельным допуском. Для Arora проверяются Matrix-Project и условная
+Theorem 2.1.
+
 ## Текущая структура
 
+- `src/dl_complexity/` — общее ядро, criteria, bayesian, coding, compression, bounds,
+  diagnostics и PyTorch-интеграции;
+- `tests/` — численные эталоны и проверки общего публичного контракта;
+  [`tests/README.md`](tests/README.md) — структура тестов и краткие расчёты;
+- `examples/quickstart.py` — небольшой пример модели, данных и совместной оценки;
+- `pyproject.toml` — упаковка src-layout и конфигурация тестов;
 - `literature/` — первоисточники и навигация по ним;
-- `presentation/` — LaTeX-исходник и PDF для Tech Meeting 1;
+- `presentation/` — презентация архитектуры и BIC PoC; предыдущая версия сохранена в архиве;
 - `NEXT_STEPS.md` — актуальный план реализации.
 
-Рабочее имя Python-пакета — `dl_complexity`; остатки шаблонного `mylib` удалены.
-Следующий шаг — создать чистый пакет и зафиксировать публичный интерфейс estimator-ов.
-Материалы Tech Meeting 1: [англоязычный LaTeX-исходник](presentation/dl_complexity_presentation.tex),
-[готовая PDF-презентация](presentation/dl_complexity_presentation.pdf) и
-[подробные заметки докладчика на русском](presentation/SPEAKER_NOTES.md).
+Python-пакет — `dl_complexity`.
+Общий вызов: `method.estimate(context, data=data)` либо `method.estimate(inputs=prepared)`.
+`ComplexitySuite` объединяет методы и явно сообщает о нехватке их входов. Результат
+сохраняет kind, units и components: native IC, кодовая длина и граница риска не становятся
+одной шкалой. Обучение и подготовка posterior/curvature/prefix artifacts выполняются явно.
+
+Поддерживаемые варианты: WAIC2 (`ddof=1`); WBIC по переданным tempered likelihood;
+negative ELBO для заданных q/prior; KFAC с явными факторами и точной подготовкой для одного
+Gaussian Linear; blockwise CI/FS, online и uniform-prefix replay; weight-only сжатие с
+бинарным codec. Для Arora реализованы Matrix-Project (Algorithm 1) и условная Theorem 2.1
+с полным sample certificate. Полная noise-stability Theorem 4.1 в этот API не входит.
+WBIC требует готовых температурных выборок, а KFAC для произвольной сети — готовых факторов.
+
+Основная презентация — **архитектура библиотеки и BIC proof of concept**, 6 слайдов на английском:
+[PDF](presentation/proof-of-concept/main.pdf),
+[LaTeX-исходник](presentation/proof-of-concept/main.tex),
+[сборка и пример запуска](presentation/README.md).
+Предыдущая презентация Tech Meeting 1 сохранена в
+[архиве](presentation/archive/tech-meeting-1/dl_complexity_presentation.pdf).
