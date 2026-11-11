@@ -89,12 +89,12 @@ python -m pytest tests/test_analytical_criteria.py -q -k gaussian_mean_mle_known
 
 ## Архив: Tech Meeting 1
 
-Предыдущие файлы сохранены без изменения содержимого:
+Предыдущая версия презентации и её описание находятся в архиве:
 
 - [PDF](archive/tech-meeting-1/dl_complexity_presentation.pdf);
 - [LaTeX-исходник](archive/tech-meeting-1/dl_complexity_presentation.tex);
 - [исходный README](archive/tech-meeting-1/README.md).
 
 Архив описывает прежний план проекта, а не текущие публичные интерфейсы.
-Его README сохранён как исторический документ; ссылка на заметки докладчика
-внутри него не имеет соответствующего файла.
+Его README описывает историческую версию; отсутствие заметок докладчика
+в нём отмечено явно. PDF и LaTeX-исходник архивной презентации не изменены.

@@ -27,7 +27,7 @@ class AIC(FittedCriterion):
         a context route additionally evaluates model likelihood.
 
     Examples:
-        >>> from dl_complexity.criteria import FitStatistics
+        >>> from dl_complexity.criteria import AIC, FitStatistics
         >>> result = AIC().estimate(inputs=FitStatistics(-100.0, 3, 100))
         >>> result.primary.unit
         'native_ic'

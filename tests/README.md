@@ -516,6 +516,7 @@ SGLD учитывает каждое наблюдение один раз за �
 | [test_criteria_selection.py](test_criteria_selection.py) | Выбор степени полинома: BIC состоятелен (доля верного выбора растёт до 1), AIC переобучается с асимптотической вероятностью; для одного лишнего параметра доли выбора большей модели совпадают с $P(\chi^2_1 > \text{штраф})$ |
 | [test_waic_invariants.py](test_waic_invariants.py) | WAIC не зависит от перестановок, аддитивен по наблюдениям, сдвиг столбца меняет только lppd, удвоение сэмплов фиксирует поправку `ddof=1`, logsumexp на разных больших по модулю значениях |
 | [test_input_contracts.py](test_input_contracts.py) | `check()` и `estimate()` отклоняют одни и те же некорректные входы AIC/BIC/HQIC, WAIC и 2-part; `per_observation` = total / n |
+| [test_prequential_demo.py](test_prequential_demo.py) | Шесть реальных MLP-прогонов, восстановление кодовых длин из JSON-журнала, причинные границы, воспроизводимость и совпадение online с replay при нулевом повторении |
 | [test_fit_statistics_torch.py](test_fit_statistics_torch.py) | Замороженные и связанные параметры в $k$, правдоподобие в eval-режиме при Dropout и BatchNorm, ошибки адаптера правдоподобия |
 | [test_two_part_networks.py](test_two_part_networks.py) | Кодек на MLP с BatchNorm и на свёрточной сети, ошибка квантования не больше половины шага, длина 2-part по числу бит: внутренний оптимум; float32 2-part длиннее равномерного кода |
 
@@ -556,6 +557,8 @@ python -m pytest -q -k analytical -o junit_family=xunit1 --junitxml=build/analyt
 
 ## Дополнительные материалы
 
+- [Prequential coding](../docs/prequential.md) — формулы, blockwise/online/replay,
+  калибровка и исполняемые примеры; [MLP-демо](../docs/demo.md).
 - [Руководство пользователя](../docs/CODE_WALKTHROUGH.md) — вызовы методов, подготовка входов и интерпретация результатов.
 - [Справочник API](../docs/API_REFERENCE.md) — сигнатуры и параметры публичных объектов.
 - [Индекс литературы](../literature/README.md) — первоисточники проекта.

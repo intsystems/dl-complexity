@@ -30,7 +30,7 @@ class HQIC(FittedCriterion):
         a context route additionally evaluates model likelihood.
 
     Examples:
-        >>> from dl_complexity.criteria import FitStatistics
+        >>> from dl_complexity.criteria import HQIC, FitStatistics
         >>> result = HQIC().estimate(inputs=FitStatistics(-100.0, 3, 100))
         >>> result.primary.unit
         'native_ic'

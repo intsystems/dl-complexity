@@ -143,3 +143,9 @@ GEMINI.md
 /verification.json
 VERSION_NOTES.md
 GITHUB_CONTENTS.md
+
+# Keep the documentation build workflow visible despite the dotfile rules above.
+!/.github/
+!/.github/workflows/
+!/.github/workflows/docs.yml
+/docs/_build/

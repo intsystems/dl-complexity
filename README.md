@@ -3,10 +3,28 @@
 **Theoretically informed deep learning model complexity estimation** — библиотека и
 экспериментальный стенд для сопоставимой оценки сложности моделей глубокого обучения.
 
-[Документация пользователя](docs/README.md) содержит быстрый старт и выбор методов.
+[Документация проекта](docs/index.md) содержит установку, архитектуру, методы,
+демонстрации, протокол экспериментов и автоматически собираемый API.
+[Руководство prequential coding](docs/prequential.md) подробно разбирает
+blockwise, online/replay и калибровку.
+[Документация пользователя](docs/README.md) сохраняет быстрый старт и выбор методов.
 В [руководстве](docs/CODE_WALKTHROUGH.md) разобраны вызовы, формулы и ограничения,
 в [справочнике API](docs/API_REFERENCE.md) — публичные сигнатуры и параметры.
 [Карта исходников](src/dl_complexity/README.md) описывает модули и базовые интерфейсы.
+
+## Установка и документация
+
+Из корня репозитория, Python 3.11+:
+
+```bash
+python -m pip install -e ".[test,docs]"
+python examples/prequential_demo.py
+python -m sphinx -b html -W --keep-going docs docs/_build/html
+```
+
+HTML-сайт с навигацией, поиском и API открывается из
+`docs/_build/html/index.html`. Подробности установки для PowerShell и Linux/macOS,
+проверки и CI — в [инструкции](docs/installation.md).
 
 ## Идея и задача
 
@@ -39,7 +57,7 @@
 интерфейса, минимальный воспроизводимый пример и unit-тесты своей ветки. Сложные методы
 сначала реализуются для небольших MLP/CNN; масштабирование не должно задерживать PoC.
 
-## Планируемая архитектура
+## Архитектура и план бенчмарка
 
 ```mermaid
 flowchart LR
@@ -53,8 +71,9 @@ flowchart LR
     H --> I[Tables, plots and report]
 ```
 
-Планируемый стек: Python 3.11+, PyTorch, NumPy/SciPy, pandas, scikit-learn;
-`pytest` и coverage для тестов, MkDocs для документации. Для кривизны допускается
+Текущий стек: Python 3.11+, PyTorch, `pytest`, Sphinx/MyST и тема Read the Docs.
+NumPy/SciPy, pandas, scikit-learn и измерение coverage относятся к дальнейшему
+экспериментальному стенду. Для кривизны допускается
 KFAC/Laplace-бэкенд, но публичный API проекта не должен зависеть от конкретной реализации.
 
 Бенчмарк фиксирует seed, split и бюджет обучения и сравнивает семейство MLP/CNN разной
@@ -123,6 +142,9 @@ Theorem 2.1.
 - `tests/` — численные эталоны и проверки общего публичного контракта;
   [`tests/README.md`](tests/README.md) — структура тестов и краткие расчёты;
 - `examples/quickstart.py` — небольшой пример модели, данных и совместной оценки;
+- `examples/prequential_demo.py` — MLP, blockwise/online/replay, калибровка и JSON-журналы;
+- `docs/` — Sphinx-сайт, руководства и API из исходных docstrings;
+- `.github/workflows/docs.yml` — сборка документации и проверки prequential-ветки;
 - `pyproject.toml` — упаковка src-layout и конфигурация тестов;
 - `literature/` — первоисточники и навигация по ним;
 - `presentation/` — презентация архитектуры и BIC PoC; предыдущая версия сохранена в архиве;

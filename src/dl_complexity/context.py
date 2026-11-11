@@ -17,7 +17,7 @@ class TrainingRecipe:
     r"""Declare a training callable and configuration without executing it.
 
     Args:
-        train (Callable): Called as train(model, **config) by run_training.
+        train (Callable): Called as ``train(model, **config)`` by run_training.
         objective (str): Human-readable declaration, not inferred from Python code.
         config (Mapping): Optimizer/data/other arguments owned by the callable.
 
