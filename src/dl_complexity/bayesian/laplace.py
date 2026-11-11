@@ -1,7 +1,10 @@
 """Laplace free energy with explicit selected dimension and total precision.
 
--log Z ~= -log L(theta_MAP) - log prior(theta_MAP)
-          - d/2 log(2*pi) + 1/2 logdet(H_likelihood + H_prior).
+Approximation::
+
+    -log Z ~= -log L(theta_MAP) - log prior(theta_MAP)
+              - d/2 log(2*pi) + 1/2 logdet(H_likelihood + H_prior).
+
 Ritter et al. (2018), A Scalable Laplace Approximation for Neural Networks.
 Exact isotropic addition here differs from their factor-wise damping Eq. 9.
 """

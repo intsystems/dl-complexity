@@ -28,6 +28,7 @@ class TwoPartMDL(CodeLengthEstimator[TwoPartInputs]):
         decoded model generally dominate an end-to-end call.
 
     Examples:
+        >>> from dl_complexity.coding import TwoPartInputs, TwoPartMDL
         >>> inputs = TwoPartInputs(model_bits=8.0, data_nll=2.0, n=2)
         >>> TwoPartMDL(unit="bits").estimate(inputs=inputs).primary.unit
         'bits'

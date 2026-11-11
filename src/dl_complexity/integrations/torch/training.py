@@ -51,7 +51,7 @@ def run_training(context, *, seed: int):
         Exception: Original training error, re-raised after recording failure.
 
     Notes:
-        Calls recipe.train(copy, **config), restoring scoped Torch RNG. Appends only
+        Calls ``recipe.train(copy, **config)``, restoring scoped Torch RNG. Appends only
         TrainingRecord metadata to context.runs; source model remains unchanged.
         Work is O(model copy) plus user training cost; optimizer/data policy belongs
         to the callable. No telemetry or proof of the declared objective is added.

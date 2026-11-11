@@ -1,6 +1,6 @@
 """Langevin sampling of the posterior for WAIC and WBIC.
 
-Samples the trainable weights w of a model from
+Samples the trainable weights w of a model from::
 
     p(w) ~ exp(-beta * nL_n(w) - alpha/2 |w|^2 - gamma/2 |w - w0|^2),
 

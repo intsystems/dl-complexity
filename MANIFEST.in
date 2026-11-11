@@ -1,6 +1,7 @@
-include examples/quickstart.py
+recursive-include examples *.py
 include literature/README.md
-recursive-include docs *.md
+recursive-include docs *.md *.rst *.py
+prune docs/_build
 recursive-include tests *.py *.md
 recursive-include src *.md
 

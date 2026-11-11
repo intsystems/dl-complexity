@@ -1,28 +1,47 @@
-# Next steps
+# Состояние и следующие шаги
 
-## Что уже сделано
+## Реализовано
 
-- [x] README заменён описанием проекта *Theoretically informed deep learning model
-  complexity estimation*.
-- [x] Участники, проектные роли и алгоритмические ветки распределены.
-- [x] Описаны исследовательский вопрос, верхнеуровневая архитектура и стек.
-- [x] Выбраны имена: **DL Complexity** для проекта и `dl_complexity` для Python-пакета.
-- [x] Подготовлен план методов: AIC/BIC/HQIC, WAIC/WBIC, 2-part MDL, variational
-  coding, KFAC-Laplace evidence, prequential coding и compression-based generalization.
-- [x] Созданы индекс литературы и презентация для Tech meeting 1.
+- Устанавливаемый пакет `dl_complexity`, Python 3.11+, PyTorch, src-layout.
+- Общие `ComplexityEstimator`, `ComplexityResult`, `Quantity`, `ModelContext`,
+  `DataSource`, `Provenance` и `ComplexitySuite`.
+- AIC/BIC/HQIC, WAIC2, WBIC и подготовка posterior с ULA/MALA/SGLD.
+- Variational free energy и Laplace/KFAC по явно подготовленным входам.
+- Двухчастный MDL, преобразования весов и реальный бинарный codec.
+- Blockwise CI/FS, online и uniform-prefix replay; температурная калибровка,
+  причинный журнал и проверки порядка «предсказать — записать — обновить».
+- Matrix-Project и условная Theorem 2.1 Arora с full-sample сертификатом.
+- Аналитические эталоны, контрактные и интеграционные pytest-тесты.
+- Примеры общего API, WAIC/WBIC и CPU MLP-демо всех prequential-вариантов
+  с калибровкой/без неё и экспортом настроек и журналов в JSON.
+- Sphinx-документация: установка, архитектура, методы, отдельное prequential
+  руководство, эксперименты, расширение и API из docstrings.
+- Workflow проверки документации, исполняемых примеров и prequential-тестов.
+- Литература и презентация архитектуры/BIC PoC; исходный план сохранён в архиве.
 
-## Ближайшие задачи
+## Следующий этап
 
-1. Зафиксировать публичные типы `ComplexityEstimator`, `ComplexityResult` и
-   `BenchmarkConfig`: единицы, входные артефакты, метаданные и обработку ошибок.
-2. Создать чистый пакет `src/dl_complexity/` без кода шаблонного `mylib`.
-3. Сделать PoC на небольшом MLP: BIC, 2-part MDL и blockwise prequential code на одном
-   фиксированном split.
-4. Настроить установку через `pyproject.toml`, `pytest`, coverage и CI.
-5. Добавить синтетический benchmark и MNIST/Fashion-MNIST; сохранять seed, split,
-   конфигурацию обучения, время и память.
-6. Подготовить промежуточную документацию, демо и черновики блог-поста/техотчёта к
-   Tech meeting 2.
+1. Создать общий benchmark runner и конфигурацию опыта. `ComplexitySuite`
+   пока только объединяет вызовы методов; `BenchmarkConfig` не реализован.
+2. Провести контролируемый PoC: BIC, 2-part MDL и prequential на общем split,
+   затем синтетика и MNIST/Fashion-MNIST с несколькими seeds.
+3. Сохранять test NLL, generalization gap, время всей подготовки и пик памяти;
+   анализировать ранговые корреляции и устойчивость результатов.
+4. Измерить покрытие и добиваться цели > 90%; расширить CI на полный набор тестов.
+5. Подготовить итоговые графики, блог-пост, технический отчёт и финальное демо.
+6. Провести cross-review алгоритмических веток. Публикация HTML-сайта требует
+   отдельной настройки хостинга; локальная сборка и CI-артефакт уже предусмотрены.
+
+## Ограничения текущей версии
+
+- KFAC для произвольной сети требует готовых факторов; точный preparer поддерживает
+  один Gaussian `nn.Linear`. Сэмплеры не проверяют смешивание цепи автоматически.
+- Prequential принимает материализованные категориальные последовательности;
+  replay — выборка из всего раскрытого префикса, а не ограниченный reservoir buffer.
+- Arora Theorem 4.1, EMA/replay streams и универсальный бинарный кодер меток
+  не входят в реализованный API.
+- В `WeightStatistics` счётчик в dtype весов может округляться; битовые
+  аккумуляторы codec ограничивают производительность на больших сообщениях.
 
 ## Критерий завершения проекта
 
