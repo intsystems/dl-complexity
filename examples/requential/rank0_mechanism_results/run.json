@@ -1,0 +1,9 @@
+{
+  "steps": 65536,
+  "repeats": 48,
+  "seed": 2026,
+  "check_against": "rank0_results",
+  "out": "rank0_mechanism_results",
+  "verified_sgd_steps": 65536,
+  "numpy": "2.3.5"
+}

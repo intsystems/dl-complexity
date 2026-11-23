@@ -1,0 +1,9 @@
+{
+  "steps": 65536,
+  "repeats": 48,
+  "seed": 2026,
+  "out": "rank0_results",
+  "check_against": "results",
+  "verified_prefix_steps": 4096,
+  "numpy": "2.3.5"
+}

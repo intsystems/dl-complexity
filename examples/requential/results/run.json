@@ -1,0 +1,11 @@
+{
+  "out": "results",
+  "seed": 2026,
+  "repeats": 48,
+  "steps": 4096,
+  "dp_limit": 512,
+  "forget_steps": 128,
+  "python": "3.13.9",
+  "numpy": "2.3.5",
+  "scipy": "1.16.3"
+}
