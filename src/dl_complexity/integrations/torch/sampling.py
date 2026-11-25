@@ -98,6 +98,7 @@ class Langevin:
 
     @property
     def total_steps(self) -> int:
+        """Return burn-in steps plus all retained and skipped sampling steps."""
         return self.burn_in + self.num_draws * self.thin
 
 
