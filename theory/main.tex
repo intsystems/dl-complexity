@@ -1,0 +1,80 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\setmainfont{FreeSerif.otf}[
+ BoldFont=FreeSerifBold.otf, ItalicFont=FreeSerifItalic.otf,
+ BoldItalicFont=FreeSerifBoldItalic.otf]
+\setsansfont{FreeSans.otf}[
+ BoldFont=FreeSansBold.otf, ItalicFont=FreeSansOblique.otf]
+\setmonofont{FreeMono.otf}
+\usepackage[russian,english]{babel}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,tabularx,graphicx,microtype}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\setlength{\emergencystretch}{1em}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xcolor}
+\definecolor{linkblue}{HTML}{254B79}
+\usepackage[colorlinks=true,allcolors=linkblue]{hyperref}
+\usepackage{enumitem}
+\setlist{itemsep=3pt,topsep=5pt}
+\newtheorem{theorem}{Теорема}
+\newtheorem{lemma}[theorem]{Лемма}
+\newtheorem{proposition}[theorem]{Утверждение}
+\newtheorem{corollary}[theorem]{Следствие}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Определение}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Замечание}
+\addto\captionsrussian{\renewcommand{\proofname}{Доказательство}}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\E}{\mathbb E}
+\renewcommand{\Prob}{\mathbb P}
+\newcommand{\Bern}{\operatorname{Bern}}
+\newcommand{\Beta}{\operatorname{Beta}}
+\newcommand{\Geom}{\operatorname{Geom}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\bits}{\mathrm{bit}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\hypersetup{pdftitle={Асимптотика requential-кодирования и восстановление конечной модели},
+ pdfauthor={Алябушев, Дементьев, Курдюков, Чирков}}
+\title{Асимптотика requential-кодирования\\и восстановление конечной модели}
+\author{Алябушев \and Дементьев \and Курдюков \and Чирков}
+\date{23 ноября 2026 г.}
+\begin{document}
+\selectlanguage{russian}
+\maketitle
+\begin{abstract}
+Длины кодов данных, траекторий обучения и конечных предикторов характеризуют
+разные объекты. Мы исследуем, как протокол передачи влияет на измеряемую
+сложность. Для детерминированного бернуллиевского учителя и ученика с априорным
+распределением $\Beta(a,b)$ доказывается оценка оптимальной ожидаемой длины
+requential-записи $A(a)\ln(1/\varepsilon)+O(1)$ при конечном KL-риске не выше
+$\varepsilon$. Коэффициент определяется одномерной оптимизацией, а геометрические
+расписания пакетов достигают его. Получена также точная ведущая константа при
+ограничении среднего числа кандидатов на пакет. Замена замороженного предиктора
+совместным байесовским предиктивом уменьшает оптимальную ведущую константу до
+$a/\ln 2$. Для факторизованной линейной регрессии выведена классификация
+накопленного риска при убывающем шаге: предельный дисбаланс факторов задаёт
+степенной показатель, а при точном балансе сумма растёт как $T/\ln^2 T$.
+Наконец, для сжимающего отображения обновления построено описание конечного
+состояния ожидаемой длины $O(\ln(1/\delta))$, не зависящей от горизонта обучения.
+Доказательства и воспроизводимые аналитические примеры показывают, какие
+различия между оценками сложности вызваны геометрией модели, а какие ---
+алгоритмом обучения и правилами кодирования.
+\end{abstract}
+\noindent\textbf{Ключевые слова:} минимальная длина описания; requential-кодирование;
+байесовский предиктив; расписание пакетов; факторизованная регрессия;
+сжатие траектории.
+
+\input{sections/introduction}
+\input{sections/background}
+\input{sections/batching}
+\input{sections/dynamics}
+\input{sections/endpoint}
+\input{sections/validation}
+\input{sections/discussion}
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+\end{document}

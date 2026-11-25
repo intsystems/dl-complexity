@@ -1,0 +1,232 @@
+\section{Геометрический коэффициент и динамика обучения}
+\label{sec:dynamics}
+
+\subsection{Скалярный стохастический градиентный спуск}
+
+Рассмотрим модель $Y=w_*X+\xi$, где $X\in\{-1,1\}$ равновероятен,
+$\xi\sim\mathcal N(0,1)$, $X$ и $\xi$ независимы и наблюдения получаются
+независимо. Ученик предсказывает
+$\mathcal N(w_tX,1)$, поэтому условный популяционный KL-риск равен
+$K_t=(w_t-w_*)^2/2$. Стохастический градиентный спуск (SGD) с функцией
+потерь $\ell(w;X,Y)=(Y-wX)^2/2$ и усреднением градиента по пакету размера $B$
+имеет вид
+\[
+ e_{t+1}=(1-\eta_t)e_t+\eta_t\zeta_t,\qquad
+ e_t=w_t-w_*,\quad\E\zeta_t=0,\quad\E\zeta_t^2=B^{-1},
+\]
+где $\zeta_t$ независима от прошлого.
+
+\begin{proposition}[Накопленный риск скалярного SGD]
+\label{prop:scalar}
+Если $0<\eta<2$ постоянно и начальная ошибка имеет конечный второй момент, то
+\begin{equation}
+ \E K_t\longrightarrow\frac{\eta}{2B(2-\eta)},\qquad
+ \E\sum_{t<T}K_t=\frac{\eta}{2B(2-\eta)}T+O(1).
+ \label{eq:constant-sgd}
+\end{equation}
+Если $\eta_t=\gamma/(t+t_0)$, $t_0>\gamma>1/2$, то
+\begin{equation}
+ \E K_t\sim\frac{\gamma^2}{2B(2\gamma-1)t},\qquad
+ \E\sum_{t<T}K_t\sim\frac{\gamma^2}{2B(2\gamma-1)}\ln T.
+ \label{eq:decaying-sgd}
+\end{equation}
+\end{proposition}
+\begin{proof}
+Для $v_t=\E e_t^2$ точно выполняется
+\begin{equation}
+ v_{t+1}=(1-\eta_t)^2v_t+\eta_t^2/B.
+ \label{eq:variance-recurrence}
+\end{equation}
+При постоянном шаге стационарное значение равно
+$v_*=\eta/[B(2-\eta)]$, а разность $v_t-v_*$ убывает геометрически.
+
+Для убывающего шага положим $x=t+t_0$ и
+$c=\gamma^2/[B(2\gamma-1)]$. Подстановка $v_t=c/x+z_t$
+в~\eqref{eq:variance-recurrence} даёт
+\[
+ z_{t+1}=(1-\gamma/x)^2z_t+O(x^{-3}).
+\]
+Произведение множителей от $s$ до $t$ ограничено константой, умноженной на
+$((s+t_0)/(t+t_0))^{2\gamma}$. Вариация постоянной даёт
+$z_t=O(x^{-\min\{2\gamma,2\}}(1+\ln x))=o(x^{-1})$.
+Отсюда $v_t\sim c/t$. Деление на два и суммирование завершают доказательство.
+\end{proof}
+
+Даже в регулярной скалярной модели накопление риска меняется с шагом и
+размером пакета. При $\gamma=1$ и фиксированном $B$ пакетная дивергенция
+$B\sum_{t<T}K_t$ имеет ведущий коэффициент $1/2$ при $\ln T$, но такое
+совпадение не является универсальным тождеством для SGD.
+
+\subsection{Нулевая факторизованная регрессия}
+
+Пусть $u,v\in\mathbb R^2$, ученик предсказывает средний отклик $uv^\top x$,
+истинный средний отклик равен нулю, шум гауссовский с единичной ковариацией,
+а $\E XX^\top=I_2$. Тогда
+\begin{equation}
+ K(u,v)=\frac12\|uv^\top\|_F^2
+       =\frac12\|u\|^2\|v\|^2.
+ \label{eq:factor-risk}
+\end{equation}
+Точный градиентный спуск по популяционному риску даёт
+\[
+ u_{t+1}=(1-\eta_tb_t)u_t,\quad
+ v_{t+1}=(1-\eta_ta_t)v_t,\quad
+ a_t=\|u_t\|^2,\quad b_t=\|v_t\|^2.
+\]
+Следовательно,
+\begin{align}
+ a_{t+1}&=a_t(1-\eta_tb_t)^2,&
+ b_{t+1}&=b_t(1-\eta_ta_t)^2,
+ \label{eq:norm-recursion}\\
+ a_{t+1}-b_{t+1}&=(a_t-b_t)(1-\eta_t^2a_tb_t).
+ \label{eq:imbalance-recursion}
+\end{align}
+В непрерывном градиентном потоке разность квадратов норм сохраняется;
+в дискретном спуске~\eqref{eq:imbalance-recursion} задаёт её изменение.
+
+\begin{theorem}[Полная классификация при гармоническом шаге]
+\label{thm:factorized}
+Пусть $\eta_t=\gamma/(t+t_0)$, $\gamma>0$, $t_0>1$,
+$a_0,b_0>0$ и $\gamma\max(a_0,b_0)<t_0$.
+Положим $D_t=|a_t-b_t|$, $K_t=a_tb_t/2$ и $S(T)=\sum_{t<T}K_t$.
+
+Если $D_0>0$, то $D_t\downarrow D_\infty>0$ и для некоторого $C>0$
+\begin{equation}
+ \alpha=2\gamma D_\infty,\qquad K_t\sim Ct^{-\alpha}.
+ \label{eq:power-risk}
+\end{equation}
+Отсюда
+\begin{equation}
+ \begin{cases}
+ S(T)\sim C T^{1-\alpha}/(1-\alpha),&0<\alpha<1,\\
+ S(T)\sim C\ln T,&\alpha=1,\\
+ S(\infty)-S(T)\sim C T^{1-\alpha}/(\alpha-1),&\alpha>1.
+ \end{cases}
+ \label{eq:sum-regimes}
+\end{equation}
+Предельный дисбаланс имеет вычислимый сертификат
+\begin{equation}
+ 0\le D_t-D_\infty
+ \le\frac{\gamma^2D_ta_tb_t}{t+t_0-1}.
+ \label{eq:imbalance-certificate}
+\end{equation}
+
+Если $D_0=0$, то $a_t=b_t=s_t$ и
+\begin{equation}
+ s_t\sim\frac1{2\gamma\ln t},\qquad
+ K_t\sim\frac1{8\gamma^2\ln^2t},\qquad
+ S(T)\sim\frac{T}{8\gamma^2\ln^2T}.
+ \label{eq:balanced}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Начальное ограничение обеспечивает $0<\eta_ta_t,\eta_tb_t<1$.
+Из~\eqref{eq:norm-recursion} по индукции следует, что $a_t,b_t$ положительны
+и не возрастают. В~\eqref{eq:imbalance-recursion} множитель лежит в $(0,1)$,
+так что знак $a_t-b_t$ сохраняется.
+
+Пусть $a_0>b_0$. Поскольку $\sum_t\eta_t^2a_tb_t<\infty$ и все множители
+строго положительны, произведение
+\[
+ D_t=D_0\prod_{s<t}(1-\eta_s^2a_sb_s)
+\]
+имеет положительный предел. В частности, $a_t\ge D_\infty$.
+Из $1-x\le e^{-x}$ получаем
+\[
+ b_t\le b_0\exp\left(-2D_\infty\sum_{s<t}\eta_s\right)
+       =O((t+t_0)^{-\alpha}),\qquad\alpha=2\gamma D_\infty>0.
+\]
+Таким образом, $b_t\to0$ и $a_t\to D_\infty$.
+
+Оценим хвост произведения с помощью $1-\prod(1-x_s)\le\sum x_s$:
+\[
+ D_t-D_\infty
+ \le D_t\sum_{s=t}^\infty\eta_s^2a_sb_s
+ \le\gamma^2D_ta_tb_t\sum_{s=t}^\infty(s+t_0)^{-2}
+ \le\frac{\gamma^2D_ta_tb_t}{t+t_0-1}.
+\]
+Это~\eqref{eq:imbalance-certificate}. В логарифме рекурсии для $b_t$
+\[
+ \ln b_{t+1}-\ln b_t
+ =-2D_\infty\eta_t
+   -2\eta_t\bigl(b_t+D_t-D_\infty\bigr)+O(\eta_t^2).
+\]
+Все остатки суммируемы: $\sum\eta_tb_t<\infty$ из степенной оценки,
+$\sum\eta_t(D_t-D_\infty)<\infty$ из сертификата и
+$\sum\eta_t^2<\infty$. Разность
+$\sum_{s<t}\eta_s-\gamma\ln t$ имеет конечный предел. Поэтому
+$\ln b_t+\alpha\ln t$ сходится к конечной константе, что даёт
+$b_t\sim c t^{-\alpha}$ с $c>0$ и~\eqref{eq:power-risk}.
+Случай $b_0>a_0$ симметричен. Суммирование эквивалентной степенной
+последовательности доказывает~\eqref{eq:sum-regimes}.
+
+Пусть теперь $a_0=b_0$. Баланс сохраняется, и
+$s_{t+1}=s_t(1-\eta_ts_t)^2$. Для обратной нормы
+\[
+ \frac1{s_{t+1}}-\frac1{s_t}
+ =\frac{2\eta_t-\eta_t^2s_t}{(1-\eta_ts_t)^2}
+ =2\eta_t+O(\eta_t^2s_t).
+\]
+Остаток суммируем, поскольку $s_t\le s_0$ и
+$\eta_ts_t\le\gamma s_0/t_0<1$. Следовательно,
+$s_t^{-1}=2\gamma\ln t+O(1)$, откуда первые две
+эквивалентности~\eqref{eq:balanced}. Последняя следует, например,
+из теоремы Штольца для $\sum_{t<T}K_t$ и $T/\ln^2T$.
+\end{proof}
+
+Классификация относится к \emph{точному} популяционному градиенту. Для
+стохастического градиента рекурсии~\eqref{eq:norm-recursion} содержат шум,
+и перенос показателя $2\gamma D_\infty$ требует отдельной теоремы.
+
+\subsection{Почему RLCT не определяет сумму рисков точного спуска}
+
+В модели~\eqref{eq:factor-risk} можно явно вычислить показатель априорной
+массы около множества нулевого риска.
+
+\begin{proposition}[Одинаковая геометрия и разные скорости]
+\label{prop:rlct-counterexample}
+Пусть априорная мера на $(u,v)$ имеет ограниченную плотность с компактным носителем,
+непрерывную и строго положительную в окрестности $(0,0)$.
+Для $u,v\in\mathbb R^2$
+\begin{equation}
+ \Pi\{K(u,v)\le\varepsilon\}
+  =\Theta(\varepsilon\ln(1/\varepsilon)),\qquad
+ \int e^{-nK(u,v)}\,\Pi(du\,dv)=\Theta(n^{-1}\ln n).
+ \label{eq:volume}
+\end{equation}
+Тем самым локальная геометрия имеет показатель $\lambda=1$ и логарифмическую
+кратность $m=2$. Для одних и тех же риска и априорной меры существуют устойчивые
+старты точного спуска, для которых $S(T)$ растёт быстрее $\ln T$, и другие
+старты, для которых $S(T)$ сходится. Поэтому равенство
+$S(T)\sim\lambda\ln T$ не является следствием одного лишь RLCT.
+\end{proposition}
+\begin{proof}
+В полярных координатах в каждой из двух плоскостей мера с точностью до
+угловой константы равна $da\,db$, где $a=\|u\|^2$, $b=\|v\|^2$.
+В малом квадрате $0<a,b<c$ площадь области $ab\le2\varepsilon$ равна
+\[
+ \int_0^c\min\{c,2\varepsilon/a\}\,da
+ =2\varepsilon\left(1+\ln\frac{c^2}{2\varepsilon}\right).
+\]
+Положительность плотности даёт нижнюю оценку, ограниченность плотности и
+носителя --- верхнюю. Для интеграла используем интегрирование по функции
+распределения риска $F(x)=\Pi(K\le x)$:
+$\int e^{-nK}d\Pi=n\int_0^\infty e^{-nx}F(x)dx$.
+Замена $z=nx$ и двусторонняя оценка на $F$ дают вторую формулу.
+
+При точном балансе уже~\eqref{eq:balanced} даёт
+$S(T)\asymp T/\ln^2T$. Для несбалансированного примера возьмём
+$\gamma=1,t_0=10,a_0=0.2,b_0=0.05$:
+$0<D_\infty<D_0=0.15$, так что $\alpha<0.3<1$.
+Для $a_0=1,b_0=0.05$ сертификат уже при $t=0$ даёт
+\[
+ D_\infty\ge0.95-\frac{0.95\cdot1\cdot0.05}{9}>0.94,
+\]
+поэтому $\alpha>1$ и сумма сходится. Риск и априорная мера в этих примерах не меняются.
+\end{proof}
+
+Интерпретация~\eqref{eq:volume} как RLCT использует обычные условия
+аналитической модели и гладкой положительной априорной плотности; сами двусторонние
+оценки доказаны непосредственно. Различие скоростей показывает зависимость
+оптимизационной записи от инициализации, сохраняя фиксированной геометрию
+статистической модели.
