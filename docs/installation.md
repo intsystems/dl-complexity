@@ -73,4 +73,36 @@ python -m sphinx -b doctest -W docs docs/_build/doctest
 Workflow `.github/workflows/docs.yml` проверяет сборку, исполняемые примеры
 документации, полный запуск демонстрационного ноутбука и тесты prequential-ветки,
 затем сохраняет HTML как артефакт CI.
-Настройка публикации GitHub Pages остаётся отдельным действием владельца проекта.
+
+## Публикация сайта через GitHub Pages
+
+Workflow подготовлен для **ручной публикации из `master`**. Push и pull request
+проверяют документацию; обновление публичного сайта запускается отдельно.
+Готовый HTML из `docs/_build/` добавлять в Git не нужно.
+
+1. Закоммитьте исходники документации и изменения
+   `.github/workflows/docs.yml`, отправьте свою ветку в GitHub и влейте pull request
+   в `master`. Новые файлы, например `docs/library_guide.md`, тоже должны войти в коммит.
+2. В репозитории откройте **Settings → Pages → Build and deployment → Source**
+   и выберите **GitHub Actions**. Если нет доступа к Settings, этот шаг выполняет
+   администратор репозитория.
+3. Откройте **Actions → Documentation and prequential checks → Run workflow**,
+   выберите **master** и запустите workflow.
+4. Дождитесь успешного завершения `docs` и `deploy`. Ссылка на опубликованный сайт
+   появится в окружении `github-pages` и в Settings → Pages. Если окружение требует
+   подтверждения deployment, его должен выполнить назначенный reviewer.
+
+Стандартный адрес для этого репозитория:
+`https://intsystems.github.io/dl-complexity/`. Он станет доступен после первого
+успешного deployment. Последующие изменения публикуются тем же ручным запуском.
+Кнопка Run workflow доступна после появления workflow в основной ветке;
+для запуска нужны права записи в репозиторий.
+
+Без публикации сайт можно скачать как ZIP-артефакт
+`dl-complexity-documentation` из успешного workflow, распаковать и открыть
+`index.html`. Для скачивания артефактов GitHub требуется вход в аккаунт.
+
+Настройка соответствует официальной документации GitHub:
+[источник публикации](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site),
+[workflow Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages),
+[ручной запуск](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).

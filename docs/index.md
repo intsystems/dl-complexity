@@ -18,6 +18,7 @@ generalization gap и устойчивостью ранжирования при
 :caption: Начало работы
 
 installation
+library_guide
 demo
 ```
 
